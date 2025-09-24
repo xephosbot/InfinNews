@@ -1,4 +1,4 @@
-package com.xbot.infinnews.ui.theme
+package com.xbot.designsystem.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

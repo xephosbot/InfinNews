@@ -4,11 +4,10 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.xbot.list"
+    namespace = "com.xbot.designsystem"
     compileSdk = 36
 
     defaultConfig {
@@ -38,12 +37,12 @@ android {
 }
 
 dependencies {
-    implementation(projects.core.common)
-    implementation(projects.core.designSystem)
-    implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.serialization)
-    implementation(libs.androidx.paging.runtime)
+    api(projects.core.domain)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    api(libs.androidx.compose.foundation)
+    api(libs.androidx.compose.material3)
     implementation(libs.androidx.paging.compose)
-    implementation(libs.koin.core)
-    implementation(libs.koin.compose.viewmodel)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }

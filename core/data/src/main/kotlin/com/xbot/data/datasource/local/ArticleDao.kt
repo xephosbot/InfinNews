@@ -12,12 +12,12 @@ internal interface ArticleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(articles: List<ArticleEntity>)
 
-    @Query("SELECT * FROM articles WHERE title LIKE :query  ORDER BY publishedAt DESC")
-    fun pagingSource(query: String): PagingSource<Int, ArticleEntity>
+    @Query("SELECT * FROM articles WHERE category = :category ORDER BY publishedAt DESC")
+    fun pagingSource(category: String): PagingSource<Int, ArticleEntity>
 
-    @Query("DELETE FROM articles WHERE title LIKE :query")
-    suspend fun deleteByQuery(query: String)
+    @Query("DELETE FROM articles WHERE category = :category")
+    suspend fun deleteByCategory(category: String)
 
-    @Query("SELECT COUNT(*) FROM articles WHERE title LIKE :query")
-    suspend fun countByQuery(query: String): Int
+    @Query("SELECT COUNT(*) FROM articles WHERE category = :category")
+    suspend fun countByCategory(category: String): Int
 }

@@ -5,12 +5,11 @@ import com.xbot.data.models.entity.ArticleEntity
 import com.xbot.data.models.entity.SourceEntity
 import com.xbot.domain.model.Article
 import com.xbot.domain.model.Source
+import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
-internal fun ArticleDto.toEntity() = ArticleEntity(
+internal fun ArticleDto.toEntity(category: String) = ArticleEntity(
     source = SourceEntity(
         sourceId = source.id,
         name = source.name
@@ -20,13 +19,12 @@ internal fun ArticleDto.toEntity() = ArticleEntity(
     description = description,
     url = url,
     urlToImage = urlToImage,
-    publishedAt = publishedAt,
+    publishedAt = Instant.parse(publishedAt).toEpochMilliseconds(),
     content = content,
+    category = category,
 )
 
-@OptIn(ExperimentalTime::class)
 internal fun ArticleEntity.toDomain() = Article(
-    id = id,
     source = Source(
         id = source.sourceId,
         name = source.name
@@ -36,6 +34,6 @@ internal fun ArticleEntity.toDomain() = Article(
     description = description,
     url = url,
     urlToImage = urlToImage,
-    publishedAt = Instant.parse(publishedAt).toLocalDateTime(TimeZone.currentSystemDefault()),
+    publishedAt = Instant.fromEpochMilliseconds(publishedAt).toLocalDateTime(TimeZone.currentSystemDefault()),
     content = content,
 )

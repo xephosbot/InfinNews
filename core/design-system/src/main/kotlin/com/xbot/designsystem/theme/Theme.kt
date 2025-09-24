@@ -1,4 +1,4 @@
-package com.xbot.infinnews.ui.theme
+package com.xbot.designsystem.theme
 
 import android.app.Activity
 import android.os.Build

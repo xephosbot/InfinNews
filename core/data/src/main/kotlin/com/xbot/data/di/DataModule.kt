@@ -1,13 +1,10 @@
 package com.xbot.data.di
 
 import androidx.room.Room
-import com.xbot.data.BuildConfig
 import com.xbot.data.datasource.local.AppDatabase
 import com.xbot.data.datasource.local.ArticleDao
 import com.xbot.data.datasource.remote.NewsService
 import com.xbot.data.repository.DefaultArticleRepository
-import com.xbot.data.utils.AuthorizationInterceptor
-import com.xbot.data.utils.EitherCallAdapterFactory
 import com.xbot.data.utils.Urls
 import com.xbot.domain.repository.ArticleRepository
 import kotlinx.serialization.json.Json
@@ -32,10 +29,9 @@ private val networkModule = module {
 
     single<OkHttpClient> {
         OkHttpClient.Builder()
-            .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            })
-            .addInterceptor(AuthorizationInterceptor(BuildConfig.API_KEY))
+            .addInterceptor(
+                HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+            )
             .build()
     }
 
@@ -43,7 +39,6 @@ private val networkModule = module {
         Retrofit.Builder()
             .baseUrl(Urls.BASE_URL)
             .addConverterFactory(get<Json>().asConverterFactory("application/json".toMediaType()))
-            .addCallAdapterFactory(com.skydoves.retrofit.adapters.arrow.EitherCallAdapterFactory.create())
             .client(get<OkHttpClient>())
             .build()
             .create(NewsService::class.java)

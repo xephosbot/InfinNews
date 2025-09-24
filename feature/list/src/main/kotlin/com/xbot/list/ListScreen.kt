@@ -77,9 +77,11 @@ private fun ListContent(
         ) {
             pagingItems(
                 items = items,
-                key = items.itemKey { it.id },
             ) { article ->
-                ArticleItem(article = article)
+                ArticleItem(
+                    modifier = Modifier.animateItem(),
+                    article = article
+                )
             }
         }
     }
@@ -110,7 +112,7 @@ private fun ArticleItem(
                     headlineContent = {
                         Text(
                             text = state.title,
-                            maxLines = 1,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
