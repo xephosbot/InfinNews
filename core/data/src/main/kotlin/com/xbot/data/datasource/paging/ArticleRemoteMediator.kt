@@ -52,7 +52,7 @@ internal class ArticleRemoteMediator(
                 }
             }
 
-            Log.e("TAGGGGGGG", "PAGE: $page, LOAD TYPE: $loadType, Page size: ${state.config.pageSize}")
+            Log.d(this::class.java.simpleName, "PAGE: $page, LOAD TYPE: $loadType, PAGE SIZE: ${state.config.pageSize}")
 
             val response = service.getTopHeadlines(
                 category = category.toString(),
