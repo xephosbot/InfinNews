@@ -55,7 +55,6 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.arrow.core)
     implementation(libs.retrofit)
-    implementation(libs.retrofit.arrow)
     implementation(libs.retrofit.serialization)
     implementation(libs.okhttp.logging)
     implementation(libs.androidx.paging.core)
