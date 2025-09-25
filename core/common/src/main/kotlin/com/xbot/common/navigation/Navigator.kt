@@ -1,6 +1,6 @@
 package com.xbot.common.navigation
 
-interface Navigator <T : NavKey>{
-    fun navigate(key: T)
+interface Navigator {
+    fun navigate(key: NavKey)
     fun navigateBack()
 }

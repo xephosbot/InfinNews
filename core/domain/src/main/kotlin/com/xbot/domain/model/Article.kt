@@ -3,7 +3,7 @@ package com.xbot.domain.model
 import kotlinx.datetime.LocalDateTime
 
 data class Article(
-    val source: Source,
+    val source: Source? = null,
     val author: String? = null,
     val title: String,
     val description: String? = null,

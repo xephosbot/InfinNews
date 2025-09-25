@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.xbot.designsystem.theme.InfinNewsTheme
-import com.xbot.list.ListScreen
+import com.xbot.infinnews.ui.InfinNewsApp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             InfinNewsTheme {
-                ListScreen()
+                InfinNewsApp()
             }
         }
     }

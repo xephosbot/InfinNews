@@ -7,4 +7,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface ArticleRepository {
     fun getArticles(category: NewsCategory): Flow<PagingData<Article>>
+    suspend fun getArticle(articleUrl: String): Article
 }

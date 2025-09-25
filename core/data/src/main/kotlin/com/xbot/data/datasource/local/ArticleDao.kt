@@ -15,6 +15,9 @@ internal interface ArticleDao {
     @Query("SELECT * FROM articles WHERE category = :category ORDER BY publishedAt DESC")
     fun pagingSource(category: String): PagingSource<Int, ArticleEntity>
 
+    @Query("SELECT * FROM articles WHERE url = :articleUrl")
+    suspend fun getArticleByUrl(articleUrl: String): ArticleEntity
+
     @Query("DELETE FROM articles WHERE category = :category")
     suspend fun deleteByCategory(category: String)
 

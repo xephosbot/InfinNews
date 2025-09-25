@@ -3,22 +3,15 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.xbot.list"
+    namespace = "com.xbot.details.api"
     compileSdk = 36
 
     defaultConfig {
         minSdk = 24
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-        }
     }
 
     compileOptions {
@@ -31,19 +24,9 @@ android {
             jvmTarget = JvmTarget.JVM_11
         }
     }
-
-    buildFeatures {
-        compose = true
-    }
 }
 
 dependencies {
-    implementation(projects.core.common)
-    implementation(projects.core.designSystem)
-    implementation(libs.kotlinx.coroutines.core)
+    api(projects.core.common)
     implementation(libs.kotlinx.serialization)
-    implementation(libs.androidx.paging.runtime)
-    implementation(libs.androidx.paging.compose)
-    implementation(libs.koin.core)
-    implementation(libs.koin.compose.viewmodel)
 }

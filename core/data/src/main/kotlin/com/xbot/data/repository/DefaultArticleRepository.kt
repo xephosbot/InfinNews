@@ -42,6 +42,10 @@ internal class DefaultArticleRepository(
         }
     }
 
+    override suspend fun getArticle(articleUrl: String): Article {
+        return database.articleDao().getArticleByUrl(articleUrl).toDomain()
+    }
+
     companion object {
         const val PAGE_SIZE = 10
     }

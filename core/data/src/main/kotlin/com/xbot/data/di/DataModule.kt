@@ -47,10 +47,10 @@ private val networkModule = module {
 
 private val databaseModule = module {
     single<AppDatabase> {
-        Room.inMemoryDatabaseBuilder(
+        Room.databaseBuilder(
             androidContext(),
             AppDatabase::class.java,
-            //"news_database"
+            "news_database"
         ).build()
     }
 

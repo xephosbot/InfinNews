@@ -14,12 +14,6 @@ android {
         minSdk = 24
     }
 
-    buildTypes {
-        release {
-            isMinifyEnabled = true
-        }
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -38,10 +32,13 @@ android {
 
 dependencies {
     api(projects.core.domain)
+    implementation(libs.kotlinx.datetime)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui.tooling.preview)
     api(libs.androidx.compose.foundation)
     api(libs.androidx.compose.material3)
+    api(libs.shimmer.compose)
+    implementation(libs.coil.compose)
     implementation(libs.androidx.paging.compose)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.compose.ui.tooling)
