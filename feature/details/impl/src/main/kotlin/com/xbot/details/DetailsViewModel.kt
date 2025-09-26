@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.xbot.details.navigation.DetailsRoute
 import com.xbot.domain.model.Article
-import com.xbot.domain.model.NewsCategory
 import com.xbot.domain.repository.ArticleRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

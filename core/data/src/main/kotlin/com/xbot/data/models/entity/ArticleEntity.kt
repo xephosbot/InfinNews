@@ -2,7 +2,6 @@ package com.xbot.data.models.entity
 
 import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.PrimaryKey
 
 @Entity(tableName = "articles", primaryKeys = ["url", "category"])
 internal data class ArticleEntity(

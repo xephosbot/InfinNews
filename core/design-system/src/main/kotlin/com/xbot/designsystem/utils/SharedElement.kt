@@ -14,7 +14,6 @@ import androidx.compose.ui.layout.approachLayout
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
-import com.xbot.domain.model.NewsCategory
 
 @Composable
 @OptIn(ExperimentalSharedTransitionApi::class)
