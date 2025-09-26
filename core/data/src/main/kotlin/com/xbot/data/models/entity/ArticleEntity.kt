@@ -4,9 +4,8 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "articles")
+@Entity(tableName = "articles", primaryKeys = ["url", "category"])
 internal data class ArticleEntity(
-    @PrimaryKey
     val url: String,
     @Embedded
     val source: SourceEntity,

@@ -7,7 +7,7 @@ import androidx.room.Query
 import com.xbot.data.models.entity.RemoteKeys
 
 @Dao
-interface RemoteKeysDao {
+internal interface RemoteKeysDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(keys: List<RemoteKeys>)
 

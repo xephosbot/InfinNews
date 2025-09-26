@@ -1,6 +1,7 @@
 package com.xbot.list
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -14,6 +15,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SnackbarHost
@@ -36,13 +38,18 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.valentinilk.shimmer.ShimmerBounds
 import com.valentinilk.shimmer.rememberShimmer
-import com.xbot.designsystem.components.ArticleCard
+import com.xbot.designsystem.components.ArticleListItem
 import com.xbot.designsystem.components.Tab
 import com.xbot.designsystem.components.pagerTabIndicatorOffset
 import com.xbot.designsystem.components.pagingItems
+import com.xbot.designsystem.utils.ArticleSharedElementKey
+import com.xbot.designsystem.utils.LocalAnimatedContentScope
+import com.xbot.designsystem.utils.LocalSharedTransitionScope
 import com.xbot.designsystem.utils.ProvideShimmer
+import com.xbot.designsystem.utils.sharedBoundsRevealWithShapeMorph
 import com.xbot.designsystem.utils.shimmerUpdater
 import com.xbot.domain.model.Article
 import com.xbot.domain.model.NewsCategory
@@ -55,7 +62,7 @@ import org.koin.compose.viewmodel.koinViewModel
 internal fun ListScreen(
     modifier: Modifier = Modifier,
     viewModel: ListViewModel = koinViewModel(),
-    onArticleClick: (Article) -> Unit
+    navigateToDetails: (article: Article, category: NewsCategory) -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -75,7 +82,10 @@ internal fun ListScreen(
                     indicator = { tabPositions ->
                         if (selectedTabIndex < tabPositions.size) {
                             PrimaryIndicator(
-                                modifier = Modifier.pagerTabIndicatorOffset(pagerState, tabPositions),
+                                modifier = Modifier.pagerTabIndicatorOffset(
+                                    pagerState,
+                                    tabPositions
+                                ),
                                 width = Dp.Unspecified
                             )
                         }
@@ -98,6 +108,7 @@ internal fun ListScreen(
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
     ) { innerPadding ->
         HorizontalPager(
             state = pagerState,
@@ -108,6 +119,7 @@ internal fun ListScreen(
 
             CategoryPage(
                 modifier = Modifier.fillMaxSize(),
+                category = category,
                 items = items,
                 onShowErrorMessage = {
                     scope.launch {
@@ -120,15 +132,19 @@ internal fun ListScreen(
                         }
                     }
                 },
-                onArticleClick = onArticleClick
+                onArticleClick = { article ->
+                    navigateToDetails(article, category)
+                }
             )
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun CategoryPage(
     modifier: Modifier = Modifier,
+    category: NewsCategory,
     items: LazyPagingItems<Article>,
     onShowErrorMessage: (Throwable) -> Unit,
     onArticleClick: (Article) -> Unit,
@@ -141,8 +157,11 @@ private fun CategoryPage(
         }
     }
 
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+    val animatedContentScope = LocalAnimatedContentScope.current
+
     val shimmer = rememberShimmer(ShimmerBounds.Custom)
-    
+
     ProvideShimmer(shimmer) {
         LazyColumn(
             modifier = modifier.shimmerUpdater(shimmer),
@@ -153,7 +172,7 @@ private fun CategoryPage(
             if (items.loadState.refresh is LoadState.Loading) {
                 items(5) {
                     Column {
-                        ArticleCard(
+                        ArticleListItem(
                             modifier = Modifier
                                 .padding(horizontal = 16.dp)
                                 .animateItem(),
@@ -166,13 +185,30 @@ private fun CategoryPage(
             } else {
                 pagingItems(items) { _, article ->
                     Column {
-                        ArticleCard(
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .animateItem(),
-                            article = article,
-                            onClick = onArticleClick
-                        )
+                        with(sharedTransitionScope) {
+                            ArticleListItem(
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .animateItem()
+                                    .then(
+                                        if (article != null) {
+                                            Modifier.sharedBoundsRevealWithShapeMorph(
+                                                sharedContentState = rememberSharedContentState(
+                                                    ArticleSharedElementKey(article.url, category.toString())
+                                                ),
+                                                animatedVisibilityScope = animatedContentScope,
+                                                targetShapeCornerRadius = 0.dp,
+                                                restingShapeCornerRadius = 12.dp,
+                                                keepChildrenSizePlacement = false,
+                                            )
+                                        } else {
+                                            Modifier
+                                        }
+                                    ),
+                                article = article,
+                                onClick = onArticleClick
+                            )
+                        }
                         Spacer(Modifier.height(16.dp))
                     }
                 }

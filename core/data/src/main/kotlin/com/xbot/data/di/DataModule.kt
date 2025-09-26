@@ -63,4 +63,6 @@ private val repositoryModule = module {
     singleOf(::DefaultArticleRepository) { bind<ArticleRepository>() }
 }
 
-val dataModule = networkModule + databaseModule + repositoryModule
+val dataModule = module {
+    includes(networkModule, databaseModule, repositoryModule)
+}

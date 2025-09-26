@@ -17,7 +17,12 @@
             <option value="$PROJECT_DIR$/core/design-system" />
             <option value="$PROJECT_DIR$/core/domain" />
             <option value="$PROJECT_DIR$/feature" />
+            <option value="$PROJECT_DIR$/feature/details" />
+            <option value="$PROJECT_DIR$/feature/details/api" />
+            <option value="$PROJECT_DIR$/feature/details/impl" />
             <option value="$PROJECT_DIR$/feature/list" />
+            <option value="$PROJECT_DIR$/feature/list/api" />
+            <option value="$PROJECT_DIR$/feature/list/impl" />
           </set>
         </option>
       </GradleProjectSettings>

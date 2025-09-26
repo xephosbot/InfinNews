@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.xbot.details.navigation.DetailsRoute
 import com.xbot.domain.model.Article
+import com.xbot.domain.model.NewsCategory
 import com.xbot.domain.repository.ArticleRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,7 +20,8 @@ internal class DetailsViewModel(
     private val repository: ArticleRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    private val articleUrl: String = savedStateHandle.toRoute<DetailsRoute>().url
+    val articleUrl: String = savedStateHandle.toRoute<DetailsRoute>().url
+    val category: String = savedStateHandle.toRoute<DetailsRoute>().category
 
     private val _state = MutableStateFlow<DetailsScreenState>(DetailsScreenState.Loading)
     val state: StateFlow<DetailsScreenState> = _state
@@ -41,7 +43,7 @@ internal class DetailsViewModel(
     }
 }
 
-sealed interface DetailsScreenState {
+internal sealed interface DetailsScreenState {
     data object Loading : DetailsScreenState
     data class Success(
         val article: Article

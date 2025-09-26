@@ -1,7 +1,9 @@
 package com.xbot.details.di
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.navigation.compose.composable
 import com.xbot.common.navigation.NavEntryBuilder
+import com.xbot.designsystem.utils.LocalAnimatedContentScope
 import com.xbot.details.DetailsScreen
 import com.xbot.details.DetailsViewModel
 import com.xbot.details.navigation.DetailsRoute
@@ -13,11 +15,13 @@ val detailsFeatureModule = module {
     single<NavEntryBuilder>(named("feature/details")) {
         { navigator ->
             composable<DetailsRoute> {
-                DetailsScreen(
-                    navigateBack = {
-                        navigator.navigateBack()
-                    }
-                )
+                CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                    DetailsScreen(
+                        navigateBack = {
+                            navigator.navigateBack()
+                        }
+                    )
+                }
             }
         }
     }

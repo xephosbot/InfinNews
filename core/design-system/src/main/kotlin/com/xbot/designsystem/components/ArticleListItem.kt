@@ -3,22 +3,31 @@ package com.xbot.designsystem.components
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -28,20 +37,22 @@ import com.valentinilk.shimmer.shimmer
 import com.xbot.designsystem.theme.InfinNewsTheme
 import com.xbot.designsystem.utils.LocalShimmer
 import com.xbot.designsystem.utils.ProvideShimmer
+import com.xbot.designsystem.utils.toLocalizedString
 import com.xbot.domain.model.Article
+import com.xbot.domain.model.Source
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 @Composable
-fun ArticleCard(
+fun ArticleListItem(
     article: Article?,
     modifier: Modifier = Modifier,
     onClick: (Article) -> Unit,
 ) {
     Crossfade(
         modifier = modifier
-            .clip(MaterialTheme.shapes.large)
+            .clip(RoundedCornerShape(12.dp))
             .clickable {
                 article?.let(onClick)
             },
@@ -49,18 +60,18 @@ fun ArticleCard(
         label = "ArticleCard CrossFade to ${if (article == null) "Loading" else "Loaded Article"}"
     ) { state ->
         when (state) {
-            null -> ArticleCardPlaceholder()
-            else -> ArticleCardContent(state)
+            null -> ArticleListItemPlaceholder()
+            else -> ArticleListItemContent(state)
         }
     }
 }
 
 @Composable
-private fun ArticleCardContent(
+private fun ArticleListItemContent(
     article: Article,
     modifier: Modifier = Modifier
 ) {
-    ArticleCardLayout(
+    ArticleListItemLayout(
         modifier = modifier,
         poster = {
             ArticleImage(
@@ -71,7 +82,16 @@ private fun ArticleCardContent(
         title = {
             Text(
                 text = article.title,
-                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        subtitle = {
+            article.source?.let { source ->
+                ArticleSourcePill(source)
+            }
+            Text(
+                text = article.publishedAt.toLocalizedString(),
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
@@ -79,45 +99,64 @@ private fun ArticleCardContent(
 }
 
 @Composable
-private fun ArticleCardLayout(
+private fun ArticleListItemLayout(
     poster: @Composable BoxScope.() -> Unit,
     title: @Composable BoxScope.() -> Unit,
+    subtitle: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerHigh
+        color = MaterialTheme.colorScheme.surfaceBright
     ) {
-        Column(
+        Row(
             modifier = modifier
+                .fillMaxWidth()
+                .height(ArticleListItemContainerHeight)
+                .padding(12.dp)
         ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                ProvideTextStyle(MaterialTheme.typography.titleSmall) {
+                    Box(
+                        Modifier.weight(1f)
+                    ) {
+                        title()
+                    }
+                }
+                ProvideTextStyle(MaterialTheme.typography.labelSmall) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.graphicsLayer {
+                            alpha = 0.75f
+                        }
+                    ) {
+                        subtitle()
+                    }
+                }
+            }
+
+            Spacer(Modifier.width(12.dp))
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp)
+                    .fillMaxHeight()
+                    .aspectRatio(1f)
+                    .clip(MaterialTheme.shapes.small)
             ) {
                 poster()
             }
-            Spacer(Modifier.height(12.dp))
-            ProvideTextStyle(MaterialTheme.typography.headlineSmall) {
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                ) {
-                    title()
-                }
-            }
-            Spacer(Modifier.height(16.dp))
         }
     }
 }
 
 @Composable
-private fun ArticleCardPlaceholder(
+private fun ArticleListItemPlaceholder(
     modifier: Modifier = Modifier
 ) {
     val shimmer = LocalShimmer.current
 
-    ArticleCardLayout(
+    ArticleListItemLayout(
         modifier = modifier,
         poster = {
             Box(
@@ -127,17 +166,21 @@ private fun ArticleCardPlaceholder(
                     .background(Color.LightGray)
             )
         },
-        title = { /*TODO*/ }
+        title = { },
+        subtitle = { }
     )
 }
 
 @Preview(apiLevel = 34)
 @Composable
-private fun ArticleCardPreview() {
+private fun ArticleListItemPreview() {
     val shimmer = rememberShimmer(ShimmerBounds.View)
     val article = remember {
         Article(
             title = "Matthew McConaughey on starring with his family in film about California's deadliest wildfire",
+            source = Source(
+                name = "google.com"
+            ),
             url = "",
             publishedAt = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         )
@@ -145,7 +188,7 @@ private fun ArticleCardPreview() {
 
     InfinNewsTheme {
         ProvideShimmer(shimmer) {
-            ArticleCard(
+            ArticleListItem(
                 article = article,
                 onClick = { article ->
 
@@ -154,3 +197,5 @@ private fun ArticleCardPreview() {
         }
     }
 }
+
+private val ArticleListItemContainerHeight = 120.dp

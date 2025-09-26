@@ -34,6 +34,7 @@ internal fun ArticleEntity.toDomain() = Article(
     description = description,
     url = url,
     urlToImage = urlToImage,
-    publishedAt = Instant.fromEpochMilliseconds(publishedAt).toLocalDateTime(TimeZone.currentSystemDefault()),
+    publishedAt = Instant.fromEpochMilliseconds(publishedAt)
+        .toLocalDateTime(TimeZone.currentSystemDefault()),
     content = content,
 )

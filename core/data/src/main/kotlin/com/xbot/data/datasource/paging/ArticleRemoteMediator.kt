@@ -69,7 +69,7 @@ internal class ArticleRemoteMediator(
                 }
                 is Response.Success -> {
                     val articles = response.articles
-                    val endOfPaginationReached = articles.isEmpty() || articles.size < state.config.pageSize.minus(1)
+                    val endOfPaginationReached = articles.isEmpty()
 
                     database.withTransaction {
                         if (loadType == LoadType.REFRESH) {
