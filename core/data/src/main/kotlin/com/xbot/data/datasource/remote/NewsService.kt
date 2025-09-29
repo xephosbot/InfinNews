@@ -13,5 +13,5 @@ internal interface NewsService {
         @Query("category") category: String,
         @Query("pageSize") pageSize: Int,
         @Query("page") page: Int,
-    ): Response
+    ): Response.Success
 }

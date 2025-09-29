@@ -54,8 +54,6 @@ internal fun DetailsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     DetailsScreenContent(
-        articleUrl = viewModel.articleUrl,
-        category = viewModel.category,
         state = state,
         modifier = modifier,
         navigateBack = navigateBack
@@ -65,8 +63,6 @@ internal fun DetailsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DetailsScreenContent(
-    articleUrl: String,
-    category: String,
     state: DetailsScreenState,
     modifier: Modifier = Modifier,
     navigateBack: () -> Unit
@@ -79,7 +75,7 @@ private fun DetailsScreenContent(
             modifier = modifier
                 .sharedBoundsRevealWithShapeMorph(
                     sharedContentState = rememberSharedContentState(
-                        ArticleSharedElementKey(articleUrl, category)
+                        ArticleSharedElementKey(state.articleUrl, state.category)
                     ),
                     animatedVisibilityScope = animatedContentScope,
                     targetShapeCornerRadius = 12.dp,
@@ -106,11 +102,11 @@ private fun DetailsScreenContent(
                     modifier = Modifier
                         .padding(innerPadding)
                         .shimmerUpdater(shimmer),
-                    targetState = state
-                ) { state ->
-                    when (state) {
-                        DetailsScreenState.Loading -> ArticlePagePlaceholder()
-                        is DetailsScreenState.Success -> ArticlePage(state.article)
+                    targetState = state.article
+                ) { article ->
+                    when (article) {
+                        null -> ArticlePagePlaceholder()
+                        else -> ArticlePage(article)
                     }
                 }
             }
@@ -147,11 +143,13 @@ private fun ArticlePage(
                 ArticleAuthorItem(article = article)
             }
         }
-        Text(
-            modifier = Modifier.padding(16.dp),
-            text = article.content.orEmpty(),
-            style = MaterialTheme.typography.bodyMedium,
-        )
+        article.content?.let { content ->
+            Text(
+                modifier = Modifier.padding(16.dp),
+                text = content,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
     }
 }
 

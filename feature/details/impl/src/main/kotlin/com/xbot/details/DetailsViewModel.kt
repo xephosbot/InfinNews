@@ -19,10 +19,10 @@ internal class DetailsViewModel(
     private val repository: ArticleRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
-    val articleUrl: String = savedStateHandle.toRoute<DetailsRoute>().url
-    val category: String = savedStateHandle.toRoute<DetailsRoute>().category
+    private val articleUrl: String = savedStateHandle.toRoute<DetailsRoute>().url
+    private val category: String = savedStateHandle.toRoute<DetailsRoute>().category
 
-    private val _state = MutableStateFlow<DetailsScreenState>(DetailsScreenState.Loading)
+    private val _state = MutableStateFlow(DetailsScreenState(null, articleUrl, category))
     val state: StateFlow<DetailsScreenState> = _state
         .onStart {
             fetchArticle(articleUrl)
@@ -30,21 +30,20 @@ internal class DetailsViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000L),
-            initialValue = DetailsScreenState.Loading
+            initialValue = _state.value
         )
 
     private fun fetchArticle(url: String) {
         viewModelScope.launch {
             _state.update {
-                DetailsScreenState.Success(repository.getArticle(url))
+                it.copy(article = repository.getArticle(url))
             }
         }
     }
 }
 
-internal sealed interface DetailsScreenState {
-    data object Loading : DetailsScreenState
-    data class Success(
-        val article: Article
-    ) : DetailsScreenState
-}
+internal data class DetailsScreenState(
+    val article: Article?,
+    val articleUrl: String,
+    val category: String,
+)

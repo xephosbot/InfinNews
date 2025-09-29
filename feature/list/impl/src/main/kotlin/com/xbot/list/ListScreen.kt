@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -56,11 +59,26 @@ import com.xbot.list.impl.R
 import kotlinx.coroutines.launch
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ListScreen(
     modifier: Modifier = Modifier,
     viewModel: ListViewModel = koinViewModel(),
+    navigateToDetails: (article: Article, category: NewsCategory) -> Unit
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    ListScreenContent(
+        modifier = modifier,
+        state = state,
+        navigateToDetails = navigateToDetails
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ListScreenContent(
+    modifier: Modifier = Modifier,
+    state: ListScreenState,
     navigateToDetails: (article: Article, category: NewsCategory) -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -113,28 +131,35 @@ internal fun ListScreen(
             state = pagerState,
             contentPadding = innerPadding,
         ) { pageIndex ->
-            val category = NewsCategory.entries[pageIndex]
-            val items = viewModel.getArticles(category).collectAsLazyPagingItems()
-
-            CategoryPage(
-                modifier = Modifier.fillMaxSize(),
-                category = category,
-                items = items,
-                onShowErrorMessage = {
-                    scope.launch {
-                        val result = snackbarHostState.showSnackbar(
-                            message = it.message.orEmpty(),
-                            actionLabel = "Retry",
-                        )
-                        if (result == SnackbarResult.ActionPerformed) {
-                            items.refresh()
-                        }
-                    }
-                },
-                onArticleClick = { article ->
-                    navigateToDetails(article, category)
+            when (state) {
+                ListScreenState.Loading -> {
+                    CategoryPagePlaceholder()
                 }
-            )
+                is ListScreenState.Success -> {
+                    val category = NewsCategory.entries[pageIndex]
+                    val items = state.categoriesPagingData[category]!!.collectAsLazyPagingItems()
+
+                    CategoryPage(
+                        modifier = Modifier.fillMaxSize(),
+                        category = category,
+                        items = items,
+                        onShowErrorMessage = {
+                            scope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = it.message.orEmpty(),
+                                    actionLabel = "Retry",
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    items.refresh()
+                                }
+                            }
+                        },
+                        onArticleClick = { article ->
+                            navigateToDetails(article, category)
+                        }
+                    )
+                }
+            }
         }
     }
 }
@@ -193,7 +218,10 @@ private fun CategoryPage(
                                         if (article != null) {
                                             Modifier.sharedBoundsRevealWithShapeMorph(
                                                 sharedContentState = rememberSharedContentState(
-                                                    ArticleSharedElementKey(article.url, category.toString())
+                                                    ArticleSharedElementKey(
+                                                        article.url,
+                                                        category.toString()
+                                                    )
                                                 ),
                                                 animatedVisibilityScope = animatedContentScope,
                                                 targetShapeCornerRadius = 0.dp,
@@ -223,6 +251,31 @@ private fun CategoryPage(
                             modifier = Modifier.padding(16.dp)
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryPagePlaceholder(
+    modifier: Modifier = Modifier
+) {
+    val shimmer = rememberShimmer(ShimmerBounds.Window)
+
+    ProvideShimmer(shimmer) {
+        Column(
+            modifier = modifier.verticalScroll(rememberScrollState(), false)
+        ) {
+            repeat(5) {
+                Column {
+                    ArticleListItem(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp),
+                        article = null,
+                        onClick = {}
+                    )
+                    Spacer(Modifier.height(16.dp))
                 }
             }
         }

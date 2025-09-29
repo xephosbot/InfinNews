@@ -12,16 +12,24 @@ import com.xbot.data.models.dto.Response
 import com.xbot.data.models.entity.ArticleEntity
 import com.xbot.data.models.entity.RemoteKeys
 import com.xbot.data.utils.toEntity
+import com.xbot.domain.Error
 import com.xbot.domain.model.NewsCategory
+import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.Json
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 import retrofit2.HttpException
 import java.io.IOException
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 
 @OptIn(ExperimentalPagingApi::class)
 internal class ArticleRemoteMediator(
     private val database: AppDatabase,
     private val service: NewsService,
     private val category: NewsCategory,
-) : RemoteMediator<Int, ArticleEntity>() {
+) : RemoteMediator<Int, ArticleEntity>(), KoinComponent {
 
     private val articleDao = database.articleDao()
     private val remoteKeysDao = database.remoteKeysDao()
@@ -63,47 +71,53 @@ internal class ArticleRemoteMediator(
                 }
             )
 
-            when (response) {
-                is Response.Error -> {
-                    MediatorResult.Error(RuntimeException(response.message))
+            val articles = response.articles
+            val endOfPaginationReached = articles.isEmpty()
+
+            database.withTransaction {
+                if (loadType == LoadType.REFRESH) {
+                    remoteKeysDao.deleteByCategory(category.toString())
+                    articleDao.deleteByCategory(category.toString())
                 }
-                is Response.Success -> {
-                    val articles = response.articles
-                    val endOfPaginationReached = articles.isEmpty()
 
-                    database.withTransaction {
-                        if (loadType == LoadType.REFRESH) {
-                            remoteKeysDao.deleteByCategory(category.toString())
-                            articleDao.deleteByCategory(category.toString())
-                        }
+                val prevKey = if (page == 1) null else page - 1
+                val nextKey = if (endOfPaginationReached) null else page + 1
 
-                        val prevKey = if (page == 1) null else page - 1
-                        val nextKey = if (endOfPaginationReached) null else page + 1
-
-                        val remoteKeys = articles.map { article ->
-                            RemoteKeys(
-                                articleUrl = article.url,
-                                prevKey = prevKey,
-                                nextKey = nextKey,
-                                category = category.toString()
-                            )
-                        }
-
-                        val articleEntities = articles.map { article ->
-                            article.toEntity(category.toString())
-                        }
-
-                        remoteKeysDao.insertAll(remoteKeys)
-                        articleDao.insertAll(articleEntities)
-                    }
-
-                    MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
+                val remoteKeys = articles.map { article ->
+                    RemoteKeys(
+                        articleUrl = article.url,
+                        prevKey = prevKey,
+                        nextKey = nextKey,
+                        category = category.toString()
+                    )
                 }
+
+                val articleEntities = articles.map { article ->
+                    article.toEntity(category.toString())
+                }
+
+                remoteKeysDao.insertAll(remoteKeys)
+                articleDao.insertAll(articleEntities)
             }
-        } catch (e: IOException) {
-            MediatorResult.Error(e)
-        } catch (e: HttpException) {
-            MediatorResult.Error(e)
+
+            MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
+        } catch (e: Exception) {
+            if (e is CancellationException) {
+                throw e
+            } else {
+                val error = when (e) {
+                    is UnknownHostException, is SocketTimeoutException -> Error.NetworkError(e)
+                    is SerializationException -> Error.SerializationError(e.message)
+                    is HttpException -> {
+                        val errorBody = e.response()?.errorBody()?.string()
+                        val error = errorBody?.let { get<Json>().decodeFromString<Response.Error>(it) }
+                        Error.HttpError(e.code(), error?.message)
+                    }
+                    is IOException -> Error.IOError(e)
+                    else -> Error.Unknown(e)
+                }
+                MediatorResult.Error(error)
+            }
         }
     }
 

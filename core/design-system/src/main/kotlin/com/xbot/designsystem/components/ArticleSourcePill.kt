@@ -28,7 +28,7 @@ fun ArticleSourcePill(
         ) {
             ProvideTextStyle(MaterialTheme.typography.labelSmall) {
                 Text(
-                    text = source.name,
+                    text = source.name ?: "Unknown",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

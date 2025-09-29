@@ -20,7 +20,4 @@ internal interface ArticleDao {
 
     @Query("DELETE FROM articles WHERE category = :category")
     suspend fun deleteByCategory(category: String)
-
-    @Query("SELECT COUNT(*) FROM articles WHERE category = :category")
-    suspend fun countByCategory(category: String): Int
 }
