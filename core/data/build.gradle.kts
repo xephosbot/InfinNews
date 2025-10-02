@@ -22,7 +22,12 @@ android {
         minSdk = 24
 
         buildConfigField("String", "API_KEY", localProperties["API_KEY"] as String)
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
     }
 
     buildFeatures {
@@ -41,6 +46,13 @@ android {
     }
 }
 
+afterEvaluate {
+    project.tasks.withType<Test> {
+        systemProperties["robolectric.offline"] = "true"
+        systemProperties["robolectric.dependency.dir"] = project.rootDir.path + "/robolectric-deps/"
+    }
+}
+
 dependencies {
     implementation(projects.core.domain)
     implementation(libs.kotlinx.coroutines.core)
@@ -56,15 +68,15 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)
+
     testImplementation(kotlin("test"))
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
+    testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit)
     testImplementation(libs.okhttp.mockwebserver)
-    androidTestImplementation(kotlin("test"))
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.espresso.core)
-    androidTestImplementation(libs.androidx.test.ext)
-    androidTestImplementation(libs.androidx.test.rules)
-    androidTestImplementation(libs.androidx.test.runner)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.androidx.test.ext)
 }

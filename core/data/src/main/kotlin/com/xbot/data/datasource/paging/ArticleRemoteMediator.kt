@@ -27,7 +27,7 @@ import java.net.UnknownHostException
 @OptIn(ExperimentalPagingApi::class)
 internal class ArticleRemoteMediator(
     private val database: AppDatabase,
-    private val service: NewsService,
+    private val service: com.xbot.data.datasource.remote.NewsService,
     private val category: NewsCategory,
 ) : RemoteMediator<Int, ArticleEntity>(), KoinComponent {
 
