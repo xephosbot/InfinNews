@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.map
 @OptIn(ExperimentalPagingApi::class)
 internal class DefaultArticleRepository(
     private val database: AppDatabase,
-    private val service: com.xbot.data.datasource.remote.NewsService,
+    private val service: NewsService,
 ) : ArticleRepository {
     override fun getArticles(category: NewsCategory): Flow<PagingData<Article>> {
         return Pager(

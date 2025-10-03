@@ -9,8 +9,7 @@ import androidx.paging.RemoteMediator
 import androidx.test.core.app.ApplicationProvider
 import com.xbot.data.datasource.local.AppDatabase
 import com.xbot.data.datasource.remote.NewsService
-import com.xbot.data.di.databaseTestModule
-import com.xbot.data.di.networkTestModule
+import com.xbot.data.di.dataTestModule
 import com.xbot.data.models.entity.ArticleEntity
 import com.xbot.domain.Error
 import com.xbot.domain.model.NewsCategory
@@ -38,8 +37,7 @@ class ArticleRemoteMediatorTest : KoinTest {
     @get:Rule
     val koinTestRule = KoinTestRule.create {
         androidContext(ApplicationProvider.getApplicationContext())
-        modules(databaseTestModule)
-        modules(networkTestModule)
+        modules(dataTestModule)
     }
 
     private val mockWebServer: MockWebServer by inject()

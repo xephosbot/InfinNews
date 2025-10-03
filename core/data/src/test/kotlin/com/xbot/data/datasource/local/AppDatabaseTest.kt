@@ -2,7 +2,7 @@ package com.xbot.data.datasource.local
 
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
-import com.xbot.data.di.databaseTestModule
+import com.xbot.data.di.dataTestModule
 import com.xbot.data.models.entity.ArticleEntity
 import com.xbot.data.models.entity.RemoteKeys
 import com.xbot.data.utils.TestDataFactory
@@ -27,7 +27,7 @@ class AppDatabaseTest : KoinTest {
     @get:Rule
     val koinTestRule = KoinTestRule.create {
         androidContext(ApplicationProvider.getApplicationContext())
-        modules(databaseTestModule)
+        modules(dataTestModule)
     }
 
     private val db: AppDatabase by inject()

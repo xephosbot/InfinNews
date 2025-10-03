@@ -1,7 +1,8 @@
 package com.xbot.data.datasource.remote
 
-import com.xbot.data.di.networkTestModule
+import com.xbot.data.di.dataTestModule
 import com.xbot.data.models.dto.Response
+import com.xbot.data.utils.JsonUtils
 import com.xbot.data.utils.TestDataFactory
 import com.xbot.domain.model.NewsCategory
 import kotlinx.coroutines.test.runTest
@@ -21,7 +22,7 @@ class NewsServiceTest : KoinTest {
 
     @get:Rule
     val koinTestRule = KoinTestRule.create {
-        modules(networkTestModule)
+        modules(dataTestModule)
     }
 
     private val mockWebServer: MockWebServer by inject()
@@ -56,7 +57,7 @@ class NewsServiceTest : KoinTest {
         assertEquals(429, exception.code())
 
         val errorBody = exception.response()?.errorBody()?.string()!!
-        val error = TestDataFactory.fromJson<Response.Error>(errorBody)
+        val error = JsonUtils.fromJson<Response.Error>(errorBody)
         val expectedError = Response.Error(
             code = "pageSizeTooBig",
             message = "The maximum value of the pageSize param is 100 articles. You have requested 101."
