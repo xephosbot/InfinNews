@@ -1,6 +1,5 @@
 package com.xbot.data.datasource.paging
 
-import android.util.Log
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
@@ -27,7 +26,7 @@ import java.net.UnknownHostException
 @OptIn(ExperimentalPagingApi::class)
 internal class ArticleRemoteMediator(
     private val database: AppDatabase,
-    private val service: com.xbot.data.datasource.remote.NewsService,
+    private val service: NewsService,
     private val category: NewsCategory,
 ) : RemoteMediator<Int, ArticleEntity>(), KoinComponent {
 
@@ -60,8 +59,6 @@ internal class ArticleRemoteMediator(
                 }
             }
 
-            Log.d(this::class.java.simpleName, "PAGE: $page, LOAD TYPE: $loadType, PAGE SIZE: ${state.config.pageSize}")
-
             val response = service.getTopHeadlines(
                 category = category.toString(),
                 page = page,
@@ -74,31 +71,29 @@ internal class ArticleRemoteMediator(
             val articles = response.articles
             val endOfPaginationReached = articles.isEmpty()
 
-            database.withTransaction {
-                if (loadType == LoadType.REFRESH) {
-                    remoteKeysDao.deleteByCategory(category.toString())
-                    articleDao.deleteByCategory(category.toString())
-                }
-
-                val prevKey = if (page == 1) null else page - 1
-                val nextKey = if (endOfPaginationReached) null else page + 1
-
-                val remoteKeys = articles.map { article ->
-                    RemoteKeys(
-                        articleUrl = article.url,
-                        prevKey = prevKey,
-                        nextKey = nextKey,
-                        category = category.toString()
-                    )
-                }
-
-                val articleEntities = articles.map { article ->
-                    article.toEntity(category.toString())
-                }
-
-                remoteKeysDao.insertAll(remoteKeys)
-                articleDao.insertAll(articleEntities)
+            if (loadType == LoadType.REFRESH) {
+                remoteKeysDao.deleteByCategory(category.toString())
+                articleDao.deleteByCategory(category.toString())
             }
+
+            val prevKey = if (page == 1) null else page - 1
+            val nextKey = if (endOfPaginationReached) null else page + 1
+
+            val remoteKeys = articles.map { article ->
+                RemoteKeys(
+                    articleUrl = article.url,
+                    prevKey = prevKey,
+                    nextKey = nextKey,
+                    category = category.toString()
+                )
+            }
+
+            val articleEntities = articles.map { article ->
+                article.toEntity(category.toString())
+            }
+
+            remoteKeysDao.insertAll(remoteKeys)
+            articleDao.insertAll(articleEntities)
 
             MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
         } catch (e: Exception) {

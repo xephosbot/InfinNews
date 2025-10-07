@@ -1,5 +1,6 @@
-package com.xbot.data.datasource.remote
+package com.xbot.data
 
+import com.xbot.data.datasource.remote.NewsService
 import com.xbot.data.di.dataTestModule
 import com.xbot.data.models.dto.Response
 import com.xbot.data.utils.JsonUtils
@@ -21,7 +22,7 @@ import kotlin.test.assertFailsWith
 class NewsServiceTest : KoinTest {
 
     @get:Rule
-    val koinTestRule = KoinTestRule.create {
+    val koinTestRule = KoinTestRule.Companion.create {
         modules(dataTestModule)
     }
 

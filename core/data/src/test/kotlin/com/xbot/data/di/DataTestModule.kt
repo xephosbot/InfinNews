@@ -1,22 +1,16 @@
 package com.xbot.data.di
 
-import androidx.room.Room
 import com.xbot.data.datasource.local.AppDatabase
-import com.xbot.data.utils.NewsServiceTestDispatcher
+import com.xbot.data.datasource.local.TestAppDatabase
+import com.xbot.data.datasource.remote.NewsServiceTestDispatcher
 import okhttp3.HttpUrl
 import okhttp3.mockwebserver.MockWebServer
-import org.koin.android.ext.koin.androidContext
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 private val testOverrideModule = module {
     single<AppDatabase> {
-        Room.inMemoryDatabaseBuilder(
-            androidContext(),
-            AppDatabase::class.java
-        )
-            .allowMainThreadQueries()
-            .build()
+        TestAppDatabase()
     }
     single<MockWebServer> {
         MockWebServer().apply {

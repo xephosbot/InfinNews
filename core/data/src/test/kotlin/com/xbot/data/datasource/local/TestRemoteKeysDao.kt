@@ -1,0 +1,26 @@
+package com.xbot.data.datasource.local
+
+import com.xbot.data.models.entity.RemoteKeys
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+
+internal class TestRemoteKeysDao : RemoteKeysDao {
+
+    private val entitiesStateFlow = MutableStateFlow(emptyList<RemoteKeys>())
+
+    override suspend fun insertAll(keys: List<RemoteKeys>) {
+        entitiesStateFlow.update { oldValues ->
+            (keys + oldValues).distinctBy { it.articleUrl + it.category }
+        }
+    }
+
+    override suspend fun getRemoteKeyByArticleUrl(articleUrl: String): RemoteKeys? {
+        return entitiesStateFlow.value.firstOrNull { it.articleUrl == articleUrl }
+    }
+
+    override suspend fun deleteByCategory(category: String) {
+        entitiesStateFlow.update { oldValues ->
+            oldValues.filterNot { it.category == category }
+        }
+    }
+}

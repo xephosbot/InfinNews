@@ -46,13 +46,6 @@ android {
     }
 }
 
-afterEvaluate {
-    project.tasks.withType<Test> {
-        systemProperties["robolectric.offline"] = "true"
-        systemProperties["robolectric.dependency.dir"] = project.rootDir.path + "/robolectric-deps/"
-    }
-}
-
 dependencies {
     implementation(projects.core.domain)
     implementation(libs.kotlinx.coroutines.core)
@@ -71,7 +64,6 @@ dependencies {
 
     testImplementation(kotlin("test"))
     testImplementation(libs.junit)
-    testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
     testImplementation(libs.koin.test)

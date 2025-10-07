@@ -1,13 +1,12 @@
-package com.xbot.data.datasource.paging
+package com.xbot.data
 
-import android.os.Build
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingConfig
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
-import androidx.test.core.app.ApplicationProvider
 import com.xbot.data.datasource.local.AppDatabase
+import com.xbot.data.datasource.paging.ArticleRemoteMediator
 import com.xbot.data.datasource.remote.NewsService
 import com.xbot.data.di.dataTestModule
 import com.xbot.data.models.entity.ArticleEntity
@@ -19,24 +18,17 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.koin.android.ext.koin.androidContext
 import org.koin.test.KoinTest
 import org.koin.test.KoinTestRule
 import org.koin.test.inject
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalPagingApi::class)
-@RunWith(RobolectricTestRunner::class)
-@Config(sdk = [Build.VERSION_CODES.TIRAMISU])
 class ArticleRemoteMediatorTest : KoinTest {
 
     @get:Rule
-    val koinTestRule = KoinTestRule.create {
-        androidContext(ApplicationProvider.getApplicationContext())
+    val koinTestRule = KoinTestRule.Companion.create {
         modules(dataTestModule)
     }
 
@@ -52,8 +44,6 @@ class ArticleRemoteMediatorTest : KoinTest {
     @After
     fun release() {
         mockWebServer.shutdown()
-        db.clearAllTables()
-        db.close()
     }
 
     @Test
@@ -67,6 +57,8 @@ class ArticleRemoteMediatorTest : KoinTest {
         )
 
         val result = remoteMediator.load(LoadType.REFRESH, pagingState)
+
+        //println((result as RemoteMediator.MediatorResult.Error).throwable.cause)
 
         assertTrue(result is RemoteMediator.MediatorResult.Success)
         assertFalse(result.endOfPaginationReached)

@@ -1,12 +1,13 @@
-package com.xbot.data.utils
+package com.xbot.data.datasource.remote
 
 import com.xbot.data.models.dto.Response
+import com.xbot.data.utils.JsonUtils
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.RecordedRequest
 import java.net.HttpURLConnection
 
-class NewsServiceTestDispatcher : Dispatcher() {
+internal class NewsServiceTestDispatcher : Dispatcher() {
     private val responseSuccess: Response.Success = JsonUtils
         .fromJson(JsonUtils.readJsonFile("response_success.json"))
 
