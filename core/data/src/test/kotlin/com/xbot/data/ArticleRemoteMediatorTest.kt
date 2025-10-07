@@ -58,8 +58,6 @@ class ArticleRemoteMediatorTest : KoinTest {
 
         val result = remoteMediator.load(LoadType.REFRESH, pagingState)
 
-        //println((result as RemoteMediator.MediatorResult.Error).throwable.cause)
-
         assertTrue(result is RemoteMediator.MediatorResult.Success)
         assertFalse(result.endOfPaginationReached)
     }
