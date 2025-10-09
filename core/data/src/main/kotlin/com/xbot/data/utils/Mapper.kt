@@ -25,6 +25,7 @@ internal fun ArticleDto.toEntity(category: String) = ArticleEntity(
 )
 
 internal fun ArticleEntity.toDomain() = Article(
+    id = url + category,
     source = Source(
         id = source.sourceId,
         name = source.name

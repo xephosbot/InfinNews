@@ -1,6 +1,5 @@
 package com.xbot.designsystem.components
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -50,18 +50,16 @@ fun ArticleListItem(
     modifier: Modifier = Modifier,
     onClick: (Article) -> Unit,
 ) {
-    Crossfade(
+    Box(
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(ArticleListItemDefaults.Shape)
             .clickable {
                 article?.let(onClick)
             },
-        targetState = article,
-        label = "ArticleCard CrossFade to ${if (article == null) "Loading" else "Loaded Article"}"
-    ) { state ->
-        when (state) {
+    ) {
+        when (article) {
             null -> ArticleListItemPlaceholder()
-            else -> ArticleListItemContent(state)
+            else -> ArticleListItemContent(article)
         }
     }
 }
@@ -71,11 +69,15 @@ private fun ArticleListItemContent(
     article: Article,
     modifier: Modifier = Modifier
 ) {
+    val publishedAtString = remember(article.publishedAt) {
+        article.publishedAt.toLocalizedString()
+    }
+
     ArticleListItemLayout(
         modifier = modifier,
         poster = {
             ArticleImage(
-                modifier = Modifier.matchParentSize(),
+                modifier = Modifier.fillMaxSize(),
                 article = article
             )
         },
@@ -90,7 +92,7 @@ private fun ArticleListItemContent(
                 ArticleSourcePill(source)
             }
             Text(
-                text = article.publishedAt.toLocalizedString(),
+                text = publishedAtString,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -111,7 +113,7 @@ private fun ArticleListItemLayout(
         Row(
             modifier = modifier
                 .fillMaxWidth()
-                .height(ArticleListItemContainerHeight)
+                .height(ArticleListItemDefaults.ContainerHeight)
                 .padding(12.dp)
         ) {
             Column(
@@ -177,6 +179,7 @@ private fun ArticleListItemPreview() {
     val shimmer = rememberShimmer(ShimmerBounds.View)
     val article = remember {
         Article(
+            id = "123",
             title = "Matthew McConaughey on starring with his family in film about California's deadliest wildfire",
             source = Source(
                 name = "google.com"
@@ -198,4 +201,9 @@ private fun ArticleListItemPreview() {
     }
 }
 
-private val ArticleListItemContainerHeight = 120.dp
+object ArticleListItemDefaults {
+    val CornerRadius = 12.dp
+    val ContainerHeight = 120.dp
+
+    val Shape = RoundedCornerShape(CornerRadius)
+}

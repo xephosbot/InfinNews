@@ -5,8 +5,8 @@ import com.xbot.common.navigation.Navigator
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class DetailsRoute(val url: String, val category: String) : NavKey
+data class DetailsRoute(val url: String, val id: String) : NavKey
 
-fun Navigator.navigateToDetails(url: String, category: String) {
-    navigate(DetailsRoute(url, category))
+fun Navigator.navigateToDetails(url: String, id: String) {
+    navigate(DetailsRoute(url, id))
 }

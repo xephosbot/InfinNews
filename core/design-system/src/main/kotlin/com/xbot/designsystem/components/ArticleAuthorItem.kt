@@ -95,6 +95,7 @@ private fun ArticleAuthorItemPreview() {
     val shimmer = rememberShimmer(ShimmerBounds.View)
     val article = remember {
         Article(
+            id = "123",
             title = "Matthew McConaughey on starring with his family in film about California's deadliest wildfire",
             source = Source(
                 name = "google.com"

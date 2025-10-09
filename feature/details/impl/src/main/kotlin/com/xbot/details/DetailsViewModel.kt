@@ -1,5 +1,6 @@
 package com.xbot.details
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,43 +8,37 @@ import androidx.navigation.toRoute
 import com.xbot.details.navigation.DetailsRoute
 import com.xbot.domain.model.Article
 import com.xbot.domain.repository.ArticleRepository
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 internal class DetailsViewModel(
     private val repository: ArticleRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
     private val articleUrl: String = savedStateHandle.toRoute<DetailsRoute>().url
-    private val category: String = savedStateHandle.toRoute<DetailsRoute>().category
+    private val articleId: String = savedStateHandle.toRoute<DetailsRoute>().id
 
-    private val _state = MutableStateFlow(DetailsScreenState(null, articleUrl, category))
-    val state: StateFlow<DetailsScreenState> = _state
-        .onStart {
-            fetchArticle(articleUrl)
+    private val articleFlow: Flow<Article> = flow { emit(repository.getArticle(articleUrl)) }
+    val state: StateFlow<DetailsScreenState> = articleFlow
+        .map { article ->
+            DetailsScreenState(
+                article = article,
+                articleId = articleId
+            )
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000L),
-            initialValue = _state.value
+            initialValue = DetailsScreenState(null, articleId)
         )
-
-    private fun fetchArticle(url: String) {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(article = repository.getArticle(url))
-            }
-        }
-    }
 }
 
+@Stable
 internal data class DetailsScreenState(
     val article: Article?,
-    val articleUrl: String,
-    val category: String,
+    val articleId: String,
 )

@@ -19,8 +19,8 @@ val listFeatureModule = module {
             composable<ListRoute> {
                 CompositionLocalProvider(LocalAnimatedContentScope provides this) {
                     ListScreen(
-                        navigateToDetails = { article, category ->
-                            navigator.navigateToDetails(article.url, category.toString())
+                        navigateToDetails = { article ->
+                            navigator.navigateToDetails(article.url, article.id)
                         }
                     )
                 }

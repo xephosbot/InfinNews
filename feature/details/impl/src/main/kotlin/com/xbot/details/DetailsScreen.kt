@@ -2,7 +2,6 @@
 
 package com.xbot.details
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +34,8 @@ import com.valentinilk.shimmer.rememberShimmer
 import com.valentinilk.shimmer.shimmer
 import com.xbot.designsystem.components.ArticleAuthorItem
 import com.xbot.designsystem.components.ArticleImage
+import com.xbot.designsystem.components.ArticleListItemDefaults
+import com.xbot.designsystem.components.Crossfade
 import com.xbot.designsystem.utils.ArticleSharedElementKey
 import com.xbot.designsystem.utils.LocalAnimatedContentScope
 import com.xbot.designsystem.utils.LocalSharedTransitionScope
@@ -75,10 +76,10 @@ private fun DetailsScreenContent(
             modifier = modifier
                 .sharedBoundsRevealWithShapeMorph(
                     sharedContentState = rememberSharedContentState(
-                        ArticleSharedElementKey(state.articleUrl, state.category)
+                        ArticleSharedElementKey(id = state.articleId)
                     ),
                     animatedVisibilityScope = animatedContentScope,
-                    targetShapeCornerRadius = 12.dp,
+                    targetShapeCornerRadius = ArticleListItemDefaults.CornerRadius,
                     restingShapeCornerRadius = 0.dp,
                 ),
             topBar = {
@@ -102,7 +103,8 @@ private fun DetailsScreenContent(
                     modifier = Modifier
                         .padding(innerPadding)
                         .shimmerUpdater(shimmer),
-                    targetState = state.article
+                    targetState = state.article,
+                    label = "Details screen crossfade"
                 ) { article ->
                     when (article) {
                         null -> ArticlePagePlaceholder()
