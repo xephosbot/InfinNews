@@ -6,11 +6,13 @@ import okio.source
 import org.koin.test.KoinTest
 import org.koin.test.get
 
-object JsonUtils : KoinTest {
+object JsonUtils {
+    context(KoinTest)
     internal inline fun <reified T> toJson(value: T): String {
         return get<Json>().encodeToString(value)
     }
 
+    context(KoinTest)
     internal inline fun <reified T> fromJson(json: String): T {
         return get<Json>().decodeFromString(json)
     }

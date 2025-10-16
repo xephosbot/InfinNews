@@ -22,7 +22,7 @@ import kotlin.test.assertFailsWith
 class NewsServiceTest : KoinTest {
 
     @get:Rule
-    val koinTestRule = KoinTestRule.Companion.create {
+    val koinTestRule = KoinTestRule.create {
         modules(dataTestModule)
     }
 
@@ -40,9 +40,9 @@ class NewsServiceTest : KoinTest {
     }
 
     @Test
-    fun `test success response`() = runTest {
+    fun test_success_response() = runTest {
         val articlesCount = 10
-        val result = service.getTopHeadlines(NewsCategory.TECHNOLOGY.toString(), articlesCount, 1)
+        val result = service.getTopHeadlines(NewsCategory.TECHNOLOGY, articlesCount, 1)
         val expectedArticle = TestDataFactory.articleDtos(1)
 
         assertEquals(expectedArticle.first(), result.articles.first())
@@ -50,9 +50,9 @@ class NewsServiceTest : KoinTest {
     }
 
     @Test
-    fun `test error response`() = runTest {
+    fun test_error_response() = runTest {
         val exception = assertFailsWith<HttpException> {
-            service.getTopHeadlines(NewsCategory.TECHNOLOGY.toString(), 101, 1)
+            service.getTopHeadlines(NewsCategory.TECHNOLOGY, 101, 1)
         }
 
         assertEquals(429, exception.code())

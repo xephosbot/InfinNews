@@ -8,9 +8,13 @@ internal class TestAppDatabase : AppDatabase() {
 
     override fun remoteKeysDao(): RemoteKeysDao = TestRemoteKeysDao()
 
+    override fun clearAllTables() =
+        throw NotImplementedError("Unused in tests")
+
     override fun createInvalidationTracker(): InvalidationTracker =
         throw NotImplementedError("Unused in tests")
 
-    override fun clearAllTables() =
-        throw NotImplementedError("Unused in tests")
+    override suspend fun <R> withTransaction(block: suspend () -> R): R {
+        return block()
+    }
 }

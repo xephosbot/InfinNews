@@ -4,24 +4,15 @@ import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
-import androidx.room.withTransaction
 import com.xbot.data.datasource.local.AppDatabase
 import com.xbot.data.datasource.remote.NewsService
-import com.xbot.data.models.dto.Response
 import com.xbot.data.models.entity.ArticleEntity
 import com.xbot.data.models.entity.RemoteKeys
+import com.xbot.data.utils.toDomainError
 import com.xbot.data.utils.toEntity
-import com.xbot.domain.Error
 import com.xbot.domain.model.NewsCategory
 import kotlinx.coroutines.CancellationException
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
-import retrofit2.HttpException
-import java.io.IOException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 
 @OptIn(ExperimentalPagingApi::class)
 internal class ArticleRemoteMediator(
@@ -60,7 +51,7 @@ internal class ArticleRemoteMediator(
             }
 
             val response = service.getTopHeadlines(
-                category = category.toString(),
+                category = category,
                 page = page,
                 pageSize = when (loadType) {
                     LoadType.REFRESH -> state.config.initialLoadSize
@@ -71,48 +62,37 @@ internal class ArticleRemoteMediator(
             val articles = response.articles
             val endOfPaginationReached = articles.isEmpty()
 
-            if (loadType == LoadType.REFRESH) {
-                remoteKeysDao.deleteByCategory(category.toString())
-                articleDao.deleteByCategory(category.toString())
+            database.withTransaction {
+                if (loadType == LoadType.REFRESH) {
+                    remoteKeysDao.deleteByCategory(category)
+                    articleDao.deleteByCategory(category)
+                }
+
+                val prevKey = if (page == 1) null else page - 1
+                val nextKey = if (endOfPaginationReached) null else page + 1
+
+                val remoteKeys = articles.map { article ->
+                    RemoteKeys(
+                        articleUrl = article.url,
+                        prevKey = prevKey,
+                        nextKey = nextKey,
+                        category = category
+                    )
+                }
+
+                val articleEntities = articles.map { article ->
+                    article.toEntity(category)
+                }
+
+                remoteKeysDao.insertAll(remoteKeys)
+                articleDao.insertAll(articleEntities)
             }
-
-            val prevKey = if (page == 1) null else page - 1
-            val nextKey = if (endOfPaginationReached) null else page + 1
-
-            val remoteKeys = articles.map { article ->
-                RemoteKeys(
-                    articleUrl = article.url,
-                    prevKey = prevKey,
-                    nextKey = nextKey,
-                    category = category.toString()
-                )
-            }
-
-            val articleEntities = articles.map { article ->
-                article.toEntity(category.toString())
-            }
-
-            remoteKeysDao.insertAll(remoteKeys)
-            articleDao.insertAll(articleEntities)
 
             MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            if (e is CancellationException) {
-                throw e
-            } else {
-                val error = when (e) {
-                    is UnknownHostException, is SocketTimeoutException -> Error.NetworkError(e)
-                    is SerializationException -> Error.SerializationError(e.message)
-                    is HttpException -> {
-                        val errorBody = e.response()?.errorBody()?.string()
-                        val error = errorBody?.let { get<Json>().decodeFromString<Response.Error>(it) }
-                        Error.HttpError(e.code(), error?.message)
-                    }
-                    is IOException -> Error.IOError(e)
-                    else -> Error.Unknown(e)
-                }
-                MediatorResult.Error(error)
-            }
+            MediatorResult.Error(e.toDomainError())
         }
     }
 

@@ -9,17 +9,21 @@ import com.xbot.details.navigation.navigateToDetails
 import com.xbot.list.ListScreen
 import com.xbot.list.ListViewModel
 import com.xbot.list.navigation.ListRoute
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val listFeatureModule = module {
     single<NavEntryBuilder>(named("feature/list")) {
-        { navigator ->
+        {
+                navigator ->
             composable<ListRoute> {
                 CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+                    val viewModel = koinViewModel<ListViewModel>()
                     ListScreen(
-                        navigateToDetails = { article ->
+                        viewModel = viewModel,
+                        onArticleClick = { article ->
                             navigator.navigateToDetails(article.url, article.id)
                         }
                     )

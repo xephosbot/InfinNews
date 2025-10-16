@@ -18,7 +18,7 @@ import kotlin.test.assertEquals
 class AppDatabaseTest : KoinTest {
 
     @get:Rule
-    val koinTestRule = KoinTestRule.Companion.create {
+    val koinTestRule = KoinTestRule.create {
         modules(dataTestModule)
     }
 

@@ -1,12 +1,14 @@
 package com.xbot.data.di
 
 import androidx.room.Room
+import com.xbot.core.data.BuildConfig
 import com.xbot.data.datasource.local.AppDatabase
 import com.xbot.data.datasource.local.ArticleDao
 import com.xbot.data.datasource.local.RemoteKeysDao
 import com.xbot.data.datasource.remote.NewsService
 import com.xbot.data.repository.DefaultArticleRepository
-import com.xbot.data.utils.Urls
+import com.xbot.data.utils.Constants
+import com.xbot.data.utils.conditional
 import com.xbot.domain.repository.ArticleRepository
 import kotlinx.serialization.json.Json
 import okhttp3.HttpUrl
@@ -33,14 +35,16 @@ private val networkModule = module {
 
     single<OkHttpClient> {
         OkHttpClient.Builder()
-            .addInterceptor(
-                HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
-            )
+            .conditional(BuildConfig.DEBUG) {
+                addInterceptor(
+                    HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BODY }
+                )
+            }
             .build()
     }
 
     single<HttpUrl>(named("API_URL")) {
-        Urls.BASE_URL.toHttpUrl()
+        Constants.API_BASE_URL.toHttpUrl()
     }
 
     single<NewsService> {

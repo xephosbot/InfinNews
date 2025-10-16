@@ -22,10 +22,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.valentinilk.shimmer.ShimmerBounds
-import com.valentinilk.shimmer.rememberShimmer
 import com.xbot.designsystem.theme.InfinNewsTheme
-import com.xbot.designsystem.utils.ProvideShimmer
 import com.xbot.designsystem.utils.toLocalizedString
 import com.xbot.domain.model.Article
 import com.xbot.domain.model.Source
@@ -69,7 +66,7 @@ fun ArticleAuthorItem(
                 }
                 ProvideTextStyle(MaterialTheme.typography.bodySmall) {
                     Text(
-                        modifier = Modifier.graphicsLayer { alpha = 0.75f },
+                        modifier = Modifier.graphicsLayer { alpha = SubheaderTextAlpha },
                         text = article.publishedAt.toLocalizedString(),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -80,7 +77,7 @@ fun ArticleAuthorItem(
                 Box(
                     modifier = Modifier
                         .padding(end = 4.dp)
-                        .graphicsLayer { alpha = 0.75f }
+                        .graphicsLayer { alpha = SubheaderTextAlpha }
                 ) {
                     ArticleSourcePill(source = source)
                 }
@@ -89,10 +86,11 @@ fun ArticleAuthorItem(
     }
 }
 
+private const val SubheaderTextAlpha = 0.75f
+
 @Preview(apiLevel = 34)
 @Composable
 private fun ArticleAuthorItemPreview() {
-    val shimmer = rememberShimmer(ShimmerBounds.View)
     val article = remember {
         Article(
             id = "123",
@@ -107,10 +105,8 @@ private fun ArticleAuthorItemPreview() {
     }
 
     InfinNewsTheme {
-        ProvideShimmer(shimmer) {
-            ArticleAuthorItem(
-                article = article,
-            )
-        }
+        ArticleAuthorItem(
+            article = article,
+        )
     }
 }

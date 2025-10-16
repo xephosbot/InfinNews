@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.xbot.data.models.entity.RemoteKeys
+import com.xbot.domain.model.NewsCategory
 
 @Dao
 internal interface RemoteKeysDao {
@@ -15,5 +16,5 @@ internal interface RemoteKeysDao {
     suspend fun getRemoteKeyByArticleUrl(articleUrl: String): RemoteKeys?
 
     @Query("DELETE FROM remote_keys WHERE category = :category")
-    suspend fun deleteByCategory(category: String)
+    suspend fun deleteByCategory(category: NewsCategory)
 }

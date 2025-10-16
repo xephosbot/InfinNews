@@ -2,7 +2,7 @@ package com.xbot.data.di
 
 import com.xbot.data.datasource.local.AppDatabase
 import com.xbot.data.datasource.local.TestAppDatabase
-import com.xbot.data.datasource.remote.NewsServiceTestDispatcher
+import com.xbot.data.datasource.remote.TestNewsServiceDispatcher
 import okhttp3.HttpUrl
 import okhttp3.mockwebserver.MockWebServer
 import org.koin.core.qualifier.named
@@ -14,7 +14,7 @@ private val testOverrideModule = module {
     }
     single<MockWebServer> {
         MockWebServer().apply {
-            dispatcher = NewsServiceTestDispatcher()
+            dispatcher = TestNewsServiceDispatcher()
         }
     }
     single<HttpUrl>(named("API_URL")) {

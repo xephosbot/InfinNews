@@ -1,7 +1,5 @@
 package com.xbot.designsystem.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -26,17 +24,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.valentinilk.shimmer.ShimmerBounds
-import com.valentinilk.shimmer.rememberShimmer
-import com.valentinilk.shimmer.shimmer
 import com.xbot.designsystem.theme.InfinNewsTheme
-import com.xbot.designsystem.utils.LocalShimmer
-import com.xbot.designsystem.utils.ProvideShimmer
+import com.xbot.designsystem.utils.shimmer
 import com.xbot.designsystem.utils.toLocalizedString
 import com.xbot.domain.model.Article
 import com.xbot.domain.model.Source
@@ -50,16 +43,20 @@ fun ArticleListItem(
     modifier: Modifier = Modifier,
     onClick: (Article) -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .clip(ArticleListItemDefaults.Shape)
-            .clickable {
-                article?.let(onClick)
-            },
+    Surface(
+        modifier = modifier,
+        onClick = { article?.let(onClick) },
+        color = MaterialTheme.colorScheme.surfaceBright,
+        shape = ArticleListItemDefaults.Shape,
     ) {
-        when (article) {
-            null -> ArticleListItemPlaceholder()
-            else -> ArticleListItemContent(article)
+        Crossfade(
+            targetState = article,
+            label = "ArticleCard CrossFade to ${if (article == null) "Loading" else "Loaded Article"}"
+        ) { state ->
+            when (state) {
+                null -> ArticleListItemPlaceholder()
+                else -> ArticleListItemContent(state)
+            }
         }
     }
 }
@@ -69,10 +66,6 @@ private fun ArticleListItemContent(
     article: Article,
     modifier: Modifier = Modifier
 ) {
-    val publishedAtString = remember(article.publishedAt) {
-        article.publishedAt.toLocalizedString()
-    }
-
     ArticleListItemLayout(
         modifier = modifier,
         poster = {
@@ -92,7 +85,7 @@ private fun ArticleListItemContent(
                 ArticleSourcePill(source)
             }
             Text(
-                text = publishedAtString,
+                text = article.publishedAt.toLocalizedString(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -107,47 +100,43 @@ private fun ArticleListItemLayout(
     subtitle: @Composable RowScope.() -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceBright
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(ArticleListItemDefaults.ContainerHeight)
+            .padding(12.dp)
     ) {
-        Row(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(ArticleListItemDefaults.ContainerHeight)
-                .padding(12.dp)
+        Column(
+            modifier = Modifier.weight(1f)
         ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                ProvideTextStyle(MaterialTheme.typography.titleSmall) {
-                    Box(
-                        Modifier.weight(1f)
-                    ) {
-                        title()
-                    }
-                }
-                ProvideTextStyle(MaterialTheme.typography.labelSmall) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.graphicsLayer {
-                            alpha = 0.75f
-                        }
-                    ) {
-                        subtitle()
-                    }
+            ProvideTextStyle(MaterialTheme.typography.titleSmall) {
+                Box(
+                    Modifier.weight(1f)
+                ) {
+                    title()
                 }
             }
+            ProvideTextStyle(MaterialTheme.typography.labelSmall) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.graphicsLayer {
+                        alpha = SubheaderTextAlpha
+                    }
+                ) {
+                    subtitle()
+                }
+            }
+        }
 
-            Spacer(Modifier.width(12.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .aspectRatio(1f)
-                    .clip(MaterialTheme.shapes.small)
-            ) {
-                poster()
-            }
+        Spacer(Modifier.width(12.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .aspectRatio(1f)
+                .clip(MaterialTheme.shapes.small)
+        ) {
+            poster()
         }
     }
 }
@@ -156,16 +145,13 @@ private fun ArticleListItemLayout(
 private fun ArticleListItemPlaceholder(
     modifier: Modifier = Modifier
 ) {
-    val shimmer = LocalShimmer.current
-
     ArticleListItemLayout(
         modifier = modifier,
         poster = {
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .shimmer(shimmer)
-                    .background(Color.LightGray)
+                    .shimmer()
             )
         },
         title = { },
@@ -173,10 +159,11 @@ private fun ArticleListItemPlaceholder(
     )
 }
 
+private const val SubheaderTextAlpha = 0.75f
+
 @Preview(apiLevel = 34)
 @Composable
 private fun ArticleListItemPreview() {
-    val shimmer = rememberShimmer(ShimmerBounds.View)
     val article = remember {
         Article(
             id = "123",
@@ -190,14 +177,11 @@ private fun ArticleListItemPreview() {
     }
 
     InfinNewsTheme {
-        ProvideShimmer(shimmer) {
-            ArticleListItem(
-                article = article,
-                onClick = { article ->
-
-                }
-            )
-        }
+        ArticleListItem(
+            article = article,
+            onClick = { article ->
+            }
+        )
     }
 }
 

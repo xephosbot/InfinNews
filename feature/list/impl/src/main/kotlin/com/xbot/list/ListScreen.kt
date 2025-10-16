@@ -38,6 +38,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -49,32 +50,29 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import com.valentinilk.shimmer.ShimmerBounds
-import com.valentinilk.shimmer.rememberShimmer
+import com.xbot.common.event.ObserveEvents
+import com.xbot.common.event.SnackbarData
 import com.xbot.designsystem.components.ArticleListItem
 import com.xbot.designsystem.components.ArticleListItemDefaults
 import com.xbot.designsystem.components.Crossfade
-import com.xbot.designsystem.components.observeLoadState
+import com.xbot.designsystem.components.ObserveLoadState
 import com.xbot.designsystem.components.pagerTabIndicatorOffset
 import com.xbot.designsystem.components.pagingItems
 import com.xbot.designsystem.utils.ArticleSharedElementKey
 import com.xbot.designsystem.utils.LocalAnimatedContentScope
 import com.xbot.designsystem.utils.LocalSharedTransitionScope
-import com.xbot.designsystem.utils.ProvideShimmer
 import com.xbot.designsystem.utils.sharedBoundsRevealWithShapeMorph
-import com.xbot.designsystem.utils.shimmerUpdater
 import com.xbot.domain.model.Article
 import com.xbot.domain.model.NewsCategory
-import com.xbot.list.impl.R
+import com.xbot.feature.list.impl.R
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 internal fun ListScreen(
     modifier: Modifier = Modifier,
-    viewModel: ListViewModel = koinViewModel(),
-    navigateToDetails: (article: Article) -> Unit
+    viewModel: ListViewModel,
+    onArticleClick: (article: Article) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -83,7 +81,7 @@ internal fun ListScreen(
         state = state,
         events = viewModel.event,
         onAction = viewModel::onAction,
-        navigateToDetails = navigateToDetails
+        onArticleClick = onArticleClick
     )
 }
 
@@ -94,14 +92,14 @@ private fun ListScreenContent(
     state: ListScreenState,
     events: Flow<ListScreenEvent>,
     onAction: (ListScreenAction) -> Unit,
-    navigateToDetails: (article: Article) -> Unit
+    onArticleClick: (article: Article) -> Unit
 ) {
     val context = LocalContext.current
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    events.observeEvents { event ->
+    events.ObserveEvents { event ->
         when (event) {
             is ListScreenEvent.ShowSnackbar -> {
                 val result = snackbarHostState.showSnackbar(
@@ -118,6 +116,14 @@ private fun ListScreenContent(
 
     val pagerState = rememberPagerState { NewsCategory.entries.size }
     val selectedTabIndex by remember { derivedStateOf { pagerState.currentPage } }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }
+            .collect {
+                val category = NewsCategory.entries[it]
+                onAction(ListScreenAction.SelectCategory(category))
+            }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -166,10 +172,6 @@ private fun ListScreenContent(
             val category = remember(pageIndex) { NewsCategory.entries[pageIndex] }
             val listState = rememberLazyListState()
 
-            LaunchedEffect(Unit) {
-                onAction(ListScreenAction.SelectCategory(category))
-            }
-
             Crossfade(
                 targetState = state,
                 contentKey = { it::class }
@@ -181,15 +183,13 @@ private fun ListScreenContent(
                             null -> CategoryPagePlaceholder(contentPadding = innerPadding)
                             else -> {
                                 val items = pagingFlow.collectAsLazyPagingItems()
-                                items.observeLoadState { error ->
+                                items.ObserveLoadState { error ->
                                     onAction(
                                         ListScreenAction.ShowSnackbar(
                                             SnackbarData(
                                                 value = error,
                                                 onDismissed = { /*Nothing to do*/ },
-                                                onActionPerformed = {
-                                                    items.retry()
-                                                }
+                                                onActionPerformed = { items.retry() }
                                             )
                                         )
                                     )
@@ -200,9 +200,7 @@ private fun ListScreenContent(
                                     contentPadding = innerPadding,
                                     listState = listState,
                                     items = items,
-                                    onArticleClick = { article ->
-                                        navigateToDetails(article)
-                                    }
+                                    onArticleClick = onArticleClick
                                 )
                             }
                         }
@@ -225,95 +223,93 @@ private fun CategoryPage(
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedContentScope = LocalAnimatedContentScope.current
 
-    val shimmer = rememberShimmer(ShimmerBounds.Custom)
-
     val pullToRefreshState = rememberPullToRefreshState()
     val isRefreshing by remember(items) {
         derivedStateOf { items.loadState.refresh is LoadState.Loading }
     }
 
     with(sharedTransitionScope) {
-        ProvideShimmer(shimmer) {
-            Box(
-                modifier = Modifier.pullToRefresh(
-                    isRefreshing = isRefreshing,
-                    state = pullToRefreshState,
-                    onRefresh = {
-                        items.refresh()
-                    }
-                ),
+        Box(
+            modifier = Modifier.pullToRefresh(
+                isRefreshing = isRefreshing,
+                state = pullToRefreshState,
+                onRefresh = {
+                    items.refresh()
+                }
+            ),
+        ) {
+            LazyColumn(
+                modifier = modifier,
+                state = listState,
+                contentPadding = contentPadding,
             ) {
-                LazyColumn(
-                    state = listState,
-                    modifier = modifier.shimmerUpdater(shimmer),
-                    contentPadding = contentPadding,
-                ) {
-                    item {
-                        Spacer(Modifier.height(16.dp))
-                    }
-                    if (items.loadState.refresh is LoadState.Loading) {
-                        items(5) {
-                            Column {
-                                ArticleListItem(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                    article = null,
-                                    onClick = onArticleClick
-                                )
-                                Spacer(Modifier.height(16.dp))
-                            }
-                        }
-                    } else {
-                        pagingItems(
-                            items = items,
-                            key = items.itemKey { it.id }
-                        ) { _, article ->
-                            Column {
-                                ArticleListItem(
-                                    modifier = Modifier
-                                        .padding(horizontal = 16.dp)
-                                        .then(
-                                            article?.let {
-                                                Modifier.sharedBoundsRevealWithShapeMorph(
-                                                    sharedContentState = rememberSharedContentState(
-                                                        ArticleSharedElementKey(id = it.id)
-                                                    ),
-                                                    animatedVisibilityScope = animatedContentScope,
-                                                    targetShapeCornerRadius = 0.dp,
-                                                    restingShapeCornerRadius = ArticleListItemDefaults.CornerRadius,
-                                                    keepChildrenSizePlacement = false,
-                                                )
-                                            } ?: Modifier
-                                        ),
-                                    article = article,
-                                    onClick = onArticleClick
-                                )
-                                Spacer(Modifier.height(16.dp))
-                            }
+                item {
+                    Spacer(Modifier.height(16.dp))
+                }
+                if (items.loadState.refresh is LoadState.Loading) {
+                    items(ListPlaceholdersCount) {
+                        Column {
+                            ArticleListItem(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                article = null,
+                                onClick = onArticleClick
+                            )
+                            Spacer(Modifier.height(16.dp))
                         }
                     }
-
-                    if (items.loadState.append is LoadState.Loading) {
-                        item {
-                            Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.padding(16.dp)
-                                )
-                            }
+                } else {
+                    pagingItems(
+                        items = items,
+                        key = items.itemKey { it.id }
+                    ) { _, article ->
+                        Column(
+                            modifier = Modifier
+                                .animateItem()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            ArticleListItem(
+                                modifier = Modifier.then(
+                                    article?.let {
+                                        Modifier.sharedBoundsRevealWithShapeMorph(
+                                            sharedContentState = rememberSharedContentState(
+                                                ArticleSharedElementKey(id = it.id)
+                                            ),
+                                            animatedVisibilityScope = animatedContentScope,
+                                            targetShapeCornerRadius = 0.dp,
+                                            restingShapeCornerRadius = ArticleListItemDefaults.CornerRadius,
+                                            keepChildrenSizePlacement = false,
+                                        )
+                                    } ?: Modifier
+                                ),
+                                article = article,
+                                onClick = onArticleClick
+                            )
+                            Spacer(Modifier.height(16.dp))
                         }
                     }
                 }
 
-                PullToRefreshDefaults.Indicator(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(contentPadding),
-                    isRefreshing = isRefreshing,
-                    state = pullToRefreshState
-                )
+                if (items.loadState.append is LoadState.Loading) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+                }
             }
+
+            PullToRefreshDefaults.Indicator(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(contentPadding),
+                isRefreshing = isRefreshing,
+                state = pullToRefreshState
+            )
         }
     }
 }
@@ -323,33 +319,22 @@ private fun CategoryPagePlaceholder(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues,
 ) {
-    val shimmer = rememberShimmer(ShimmerBounds.Window)
-
-    ProvideShimmer(shimmer) {
-        Column(
-            modifier = modifier
-                .padding(contentPadding)
-                .verticalScroll(rememberScrollState(), false)
-        ) {
-            repeat(5) {
-                Column {
-                    ArticleListItem(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp),
-                        article = null,
-                        onClick = {}
-                    )
-                    Spacer(Modifier.height(16.dp))
-                }
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState(), false)
+            .padding(contentPadding)
+    ) {
+        repeat(ListPlaceholdersCount) {
+            Column {
+                Spacer(Modifier.height(16.dp))
+                ArticleListItem(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp),
+                    article = null,
+                    onClick = {}
+                )
             }
         }
-    }
-}
-
-@Composable
-internal fun <T> Flow<T>.observeEvents(onEvent: suspend (T) -> Unit) {
-    LaunchedEffect(this) {
-        this@observeEvents.collect(onEvent)
     }
 }
 
@@ -364,3 +349,5 @@ private val NewsCategory.stringRes: Int
         NewsCategory.SPORTS -> R.string.category_sports
         NewsCategory.TECHNOLOGY -> R.string.category_technology
     }
+
+private const val ListPlaceholdersCount = 10

@@ -10,7 +10,7 @@ import com.xbot.data.datasource.paging.ArticleRemoteMediator
 import com.xbot.data.datasource.remote.NewsService
 import com.xbot.data.di.dataTestModule
 import com.xbot.data.models.entity.ArticleEntity
-import com.xbot.domain.Error
+import com.xbot.domain.DomainError
 import com.xbot.domain.model.NewsCategory
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockWebServer
@@ -28,7 +28,7 @@ import kotlin.test.assertTrue
 class ArticleRemoteMediatorTest : KoinTest {
 
     @get:Rule
-    val koinTestRule = KoinTestRule.Companion.create {
+    val koinTestRule = KoinTestRule.create {
         modules(dataTestModule)
     }
 
@@ -47,12 +47,15 @@ class ArticleRemoteMediatorTest : KoinTest {
     }
 
     @Test
-    fun `refresh load returns success`() = runTest {
+    fun refresh_load_returns_success() = runTest {
         val remoteMediator = ArticleRemoteMediator(db, service, NewsCategory.GENERAL)
         val pagingState = PagingState<Int, ArticleEntity>(
             pages = emptyList(),
             anchorPosition = null,
-            config = PagingConfig(20),
+            config = PagingConfig(
+                pageSize = 20,
+                initialLoadSize = 20,
+            ),
             leadingPlaceholderCount = 20
         )
 
@@ -63,18 +66,21 @@ class ArticleRemoteMediatorTest : KoinTest {
     }
 
     @Test
-    fun `refresh load returns error`() = runTest {
+    fun refresh_load_returns_error() = runTest {
         val remoteMediator = ArticleRemoteMediator(db, service, NewsCategory.GENERAL)
         val pagingState = PagingState<Int, ArticleEntity>(
             pages = emptyList(),
             anchorPosition = null,
-            config = PagingConfig(101),
+            config = PagingConfig(
+                pageSize = 101,
+                initialLoadSize = 101,
+            ),
             leadingPlaceholderCount = 101
         )
 
         val result = remoteMediator.load(LoadType.REFRESH, pagingState)
 
         assertTrue(result is RemoteMediator.MediatorResult.Error)
-        assertTrue(result.throwable is Error.HttpError)
+        assertTrue(result.throwable is DomainError.HttpError)
     }
 }

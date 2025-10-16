@@ -97,7 +97,7 @@ fun Modifier.skipToLookaheadPosition(
 
                         val offset =
                             it.localPositionOf(lookaheadScopeCoordinates, delta) -
-                                    it.localPositionOf(lookaheadScopeCoordinates)
+                                it.localPositionOf(lookaheadScopeCoordinates)
 
                         place(offset.round())
                     } ?: place(0, 0)

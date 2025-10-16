@@ -2,6 +2,8 @@ package com.xbot.data.models.entity
 
 import androidx.room.Embedded
 import androidx.room.Entity
+import com.xbot.domain.model.NewsCategory
+import kotlinx.datetime.Instant
 
 @Entity(tableName = "articles", primaryKeys = ["url", "category"])
 internal data class ArticleEntity(
@@ -12,7 +14,7 @@ internal data class ArticleEntity(
     val title: String,
     val description: String?,
     val urlToImage: String?,
-    val publishedAt: Long,
+    val publishedAt: Instant,
     val content: String?,
-    val category: String,
+    val category: NewsCategory,
 )

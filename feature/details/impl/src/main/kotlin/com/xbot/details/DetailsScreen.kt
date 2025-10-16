@@ -3,10 +3,10 @@
 package com.xbot.details
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -20,18 +20,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.valentinilk.shimmer.ShimmerBounds
-import com.valentinilk.shimmer.rememberShimmer
-import com.valentinilk.shimmer.shimmer
+import com.xbot.common.event.ObserveEvents
 import com.xbot.designsystem.components.ArticleAuthorItem
 import com.xbot.designsystem.components.ArticleImage
 import com.xbot.designsystem.components.ArticleListItemDefaults
@@ -39,35 +41,55 @@ import com.xbot.designsystem.components.Crossfade
 import com.xbot.designsystem.utils.ArticleSharedElementKey
 import com.xbot.designsystem.utils.LocalAnimatedContentScope
 import com.xbot.designsystem.utils.LocalSharedTransitionScope
-import com.xbot.designsystem.utils.LocalShimmer
-import com.xbot.designsystem.utils.ProvideShimmer
 import com.xbot.designsystem.utils.sharedBoundsRevealWithShapeMorph
-import com.xbot.designsystem.utils.shimmerUpdater
+import com.xbot.designsystem.utils.shimmer
 import com.xbot.domain.model.Article
-import org.koin.compose.viewmodel.koinViewModel
+import com.xbot.feature.details.impl.R
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 internal fun DetailsScreen(
     modifier: Modifier = Modifier,
-    viewModel: DetailsViewModel = koinViewModel(),
-    navigateBack: () -> Unit,
+    viewModel: DetailsViewModel,
+    onClickBack: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     DetailsScreenContent(
-        state = state,
         modifier = modifier,
-        navigateBack = navigateBack
+        state = state,
+        events = viewModel.event,
+        onClickBack = onClickBack
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 private fun DetailsScreenContent(
-    state: DetailsScreenState,
     modifier: Modifier = Modifier,
-    navigateBack: () -> Unit
+    state: DetailsScreenState,
+    events: Flow<DetailsScreenEvent>,
+    onClickBack: () -> Unit
 ) {
+    val context = LocalContext.current
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    events.ObserveEvents { event ->
+        when (event) {
+            is DetailsScreenEvent.ShowSnackbar -> {
+                val result = snackbarHostState.showSnackbar(
+                    message = event.data.value.message.orEmpty(),
+                    actionLabel = context.getString(R.string.button_retry),
+                )
+                when (result) {
+                    SnackbarResult.Dismissed -> event.data.onDismissed()
+                    SnackbarResult.ActionPerformed -> event.data.onActionPerformed()
+                }
+            }
+        }
+    }
+
     val sharedTransitionScope = LocalSharedTransitionScope.current
     val animatedContentScope = LocalAnimatedContentScope.current
 
@@ -86,7 +108,7 @@ private fun DetailsScreenContent(
                 TopAppBar(
                     title = {},
                     navigationIcon = {
-                        IconButton(onClick = navigateBack) {
+                        IconButton(onClick = onClickBack) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = null,
@@ -95,21 +117,17 @@ private fun DetailsScreenContent(
                     }
                 )
             },
-            containerColor = MaterialTheme.colorScheme.surfaceBright
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = MaterialTheme.colorScheme.surfaceBright,
         ) { innerPadding ->
-            val shimmer = rememberShimmer(shimmerBounds = ShimmerBounds.Custom)
-            ProvideShimmer(shimmer) {
-                Crossfade(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .shimmerUpdater(shimmer),
-                    targetState = state.article,
-                    label = "Details screen crossfade"
-                ) { article ->
-                    when (article) {
-                        null -> ArticlePagePlaceholder()
-                        else -> ArticlePage(article)
-                    }
+            Crossfade(
+                modifier = Modifier,
+                targetState = state.article,
+                label = "Details screen crossfade"
+            ) { article ->
+                when (article) {
+                    null -> ArticlePagePlaceholder(contentPadding = innerPadding)
+                    else -> ArticlePage(article = article, contentPadding = innerPadding)
                 }
             }
         }
@@ -119,10 +137,13 @@ private fun DetailsScreenContent(
 @Composable
 private fun ArticlePage(
     article: Article,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
 ) {
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState())
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(contentPadding)
     ) {
         ArticleImage(
             article = article,
@@ -157,23 +178,20 @@ private fun ArticlePage(
 
 @Composable
 private fun ArticlePagePlaceholder(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues,
 ) {
-    val shimmer = LocalShimmer.current
-
     Column(
-        modifier = modifier.verticalScroll(
-            state = rememberScrollState(),
-            enabled = false,
-        )
+        modifier = modifier
+            .verticalScroll(rememberScrollState(), false)
+            .padding(contentPadding)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(max = 300.dp)
                 .aspectRatio(1f)
-                .shimmer(shimmer)
-                .background(Color.LightGray)
+                .shimmer()
         )
     }
 }

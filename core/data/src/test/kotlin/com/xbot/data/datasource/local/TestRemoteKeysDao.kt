@@ -1,6 +1,7 @@
 package com.xbot.data.datasource.local
 
 import com.xbot.data.models.entity.RemoteKeys
+import com.xbot.domain.model.NewsCategory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -18,9 +19,9 @@ internal class TestRemoteKeysDao : RemoteKeysDao {
         return entitiesStateFlow.value.firstOrNull { it.articleUrl == articleUrl }
     }
 
-    override suspend fun deleteByCategory(category: String) {
-        entitiesStateFlow.update { oldValues ->
-            oldValues.filterNot { it.category == category }
+    override suspend fun deleteByCategory(category: NewsCategory) {
+        entitiesStateFlow.update { keys ->
+            keys.filterNot { it.category == category }
         }
     }
 }

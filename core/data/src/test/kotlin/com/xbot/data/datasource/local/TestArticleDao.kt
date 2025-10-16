@@ -2,6 +2,7 @@ package com.xbot.data.datasource.local
 
 import androidx.paging.PagingSource
 import com.xbot.data.models.entity.ArticleEntity
+import com.xbot.domain.model.NewsCategory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -15,14 +16,14 @@ internal class TestArticleDao : ArticleDao {
         }
     }
 
-    override fun pagingSource(category: String): PagingSource<Int, ArticleEntity> =
+    override fun pagingSource(category: NewsCategory): PagingSource<Int, ArticleEntity> =
         throw NotImplementedError("Unused in tests")
 
     override suspend fun getArticleByUrl(articleUrl: String): ArticleEntity {
         return entitiesStateFlow.value.first { it.url == articleUrl }
     }
 
-    override suspend fun deleteByCategory(category: String) {
+    override suspend fun deleteByCategory(category: NewsCategory) {
         entitiesStateFlow.update { entities ->
             entities.filterNot { it.category == category }
         }

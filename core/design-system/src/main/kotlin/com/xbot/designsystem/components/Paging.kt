@@ -25,7 +25,7 @@ inline fun <T : Any> LazyListScope.pagingItems(
 }
 
 @Composable
-fun <T : Any> LazyPagingItems<T>.observeLoadState(
+fun <T : Any> LazyPagingItems<T>.ObserveLoadState(
     onError: (Throwable) -> Unit
 ) {
     LaunchedEffect(this) {

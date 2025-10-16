@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.xbot.common.event.SnackbarData
 import com.xbot.domain.model.Article
 import com.xbot.domain.model.NewsCategory
 import com.xbot.domain.repository.ArticleRepository
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -26,6 +28,7 @@ internal class ListViewModel(
 
     private val _events = Channel<ListScreenEvent>()
     val event: Flow<ListScreenEvent> = _events.receiveAsFlow()
+        .distinctUntilChanged()
 
     fun onAction(action: ListScreenAction) {
         when (action) {
@@ -70,6 +73,7 @@ internal class ListViewModel(
 internal sealed interface ListScreenState {
     @Stable
     data object Loading : ListScreenState
+
     @Stable
     data class Success(
         val selectedCategory: NewsCategory,
@@ -80,7 +84,8 @@ internal sealed interface ListScreenState {
 @Stable
 internal sealed interface ListScreenAction {
     @Stable
-    data class SelectCategory(val category: NewsCategory): ListScreenAction
+    data class SelectCategory(val category: NewsCategory) : ListScreenAction
+
     @Stable
     data class ShowSnackbar(val data: SnackbarData<Throwable>) : ListScreenAction
 }
@@ -90,10 +95,3 @@ internal sealed interface ListScreenEvent {
     @Stable
     data class ShowSnackbar(val data: SnackbarData<Throwable>) : ListScreenEvent
 }
-
-@Stable
-internal data class SnackbarData<T>(
-    val value: T,
-    val onActionPerformed: () -> Unit,
-    val onDismissed: () -> Unit,
-)

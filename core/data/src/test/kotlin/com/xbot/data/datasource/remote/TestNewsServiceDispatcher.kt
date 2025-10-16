@@ -5,11 +5,13 @@ import com.xbot.data.utils.JsonUtils
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.RecordedRequest
+import org.koin.test.KoinTest
 import java.net.HttpURLConnection
+import kotlin.math.min
 
-internal class NewsServiceTestDispatcher : Dispatcher() {
-    private val responseSuccess: Response.Success = JsonUtils
-        .fromJson(JsonUtils.readJsonFile("response_success.json"))
+internal class TestNewsServiceDispatcher : Dispatcher(), KoinTest {
+    private val responseSuccess: Response.Success =
+        JsonUtils.fromJson(JsonUtils.readJsonFile("response_success.json"))
 
     override fun dispatch(request: RecordedRequest): MockResponse {
         return when {
@@ -22,7 +24,7 @@ internal class NewsServiceTestDispatcher : Dispatcher() {
 
                 if (pageSize <= 100) {
                     val from = (page - 1) * pageSize
-                    val to = minOf(from + pageSize, responseSuccess.totalResults)
+                    val to = min(from + pageSize, responseSuccess.totalResults)
 
                     val pageData = if (from in responseSuccess.articles.indices) {
                         responseSuccess.articles.subList(from, to)
